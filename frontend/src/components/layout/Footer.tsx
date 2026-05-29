@@ -37,9 +37,7 @@ export default function Footer({ settings = defaultSettings }: FooterProps) {
         {/* Brand */}
         <div className="lg:col-span-1">
           <Link href="/" className="mb-5 inline-block">
-            <div className="bg-white rounded-xl px-3 py-2 inline-flex items-center">
-              <Image src="/priya-logo1.svg" alt={s.company_name} width={140} height={42} className="object-contain" />
-            </div>
+            <Image src="/logo-lightmode.svg" alt={s.company_name} width={140} height={42} className="object-contain" />
           </Link>
           <p className="text-sm leading-relaxed mb-5">{s.tagline}</p>
           <div className="flex gap-3">

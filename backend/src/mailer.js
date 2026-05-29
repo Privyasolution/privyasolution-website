@@ -1,4 +1,8 @@
 const nodemailer = require("nodemailer");
+const path = require("path");
+
+const SITE_URL = process.env.FRONTEND_URL || "https://privyasolution.in";
+const LOGO_URL = `${SITE_URL}/logo-darkmode.svg`;
 
 function isSmtpConfigured() {
   return (
@@ -9,11 +13,10 @@ function isSmtpConfigured() {
   );
 }
 
-// Create reusable transporter
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT) || 587,
-  secure: false, // true only for port 465
+  secure: false,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASSWORD,
@@ -41,16 +44,22 @@ async function sendInquiryEmail(data) {
   }
 
   const smtpReady = await verifyTransporter();
-
   if (!smtpReady) {
     console.log("⚠️ Inquiry saved to DB only.");
     return;
   }
 
+  const logoHeader = `
+    <div style="text-align:center;margin-bottom:20px;">
+      <img src="${LOGO_URL}" alt="Privya Solution LLP" style="width:180px;height:auto;display:inline-block;" />
+    </div>
+  `;
+
   const adminHtml = `
     <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;background:#f8fafc;padding:24px;border-radius:12px;">
       <div style="background:linear-gradient(135deg,#1A1F5E,#2B5CE6);padding:20px 24px;border-radius:8px;margin-bottom:20px;">
-        <h2 style="color:#fff;margin:0;font-size:18px;">
+        ${logoHeader}
+        <h2 style="color:#fff;margin:0;font-size:18px;text-align:center;">
           🔔 New Inquiry — Privya Solution LLP
         </h2>
       </div>
@@ -89,7 +98,8 @@ async function sendInquiryEmail(data) {
   const userHtml = `
     <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;background:#f8fafc;padding:24px;border-radius:12px;">
       <div style="background:linear-gradient(135deg,#1A1F5E,#2B5CE6);padding:20px 24px;border-radius:8px;margin-bottom:20px;">
-        <h2 style="color:#fff;margin:0;font-size:18px;">
+        ${logoHeader}
+        <h2 style="color:#fff;margin:0;font-size:18px;text-align:center;">
           Thank you for contacting Privya Solution LLP
         </h2>
       </div>
@@ -121,34 +131,41 @@ async function sendInquiryEmail(data) {
     </div>
   `;
 
+  const isBrochureRequest = data.service_interest === "Brochure Request";
+
   try {
-    // Send admin email
     await transporter.sendMail({
       from: `"Privya Solution LLP" <${process.env.FROM_EMAIL}>`,
       to: process.env.TO_EMAIL,
       replyTo: data.email,
       subject: `🔔 New Inquiry: ${data.name}`,
       html: adminHtml,
-       attachments: [
-        {
-          filename: "privya-solution-brochure.pdf",
-          path: path.join(__dirname, "../assets/privya-solution-brochure.pdf"),
-          contentType: "application/pdf",
-        },
-      ],
     });
 
     console.log(`✅ Admin email sent successfully`);
 
-    // Auto-reply email
     if (data.email) {
+      const userMailOptions = {
+        from: `"Privya Solution LLP" <${process.env.FROM_EMAIL}>`,
+        to: data.email,
+        subject: isBrochureRequest
+          ? "Your Privya Solution Brochure — Privya Solution LLP"
+          : "We received your inquiry — Privya Solution LLP",
+        html: userHtml,
+      };
+
+      if (isBrochureRequest) {
+        userMailOptions.attachments = [
+          {
+            filename: "Privya-Solution-Brochure.pdf",
+            path: path.join(__dirname, "../assets/privya-solution-brochure.pdf"),
+            contentType: "application/pdf",
+          },
+        ];
+      }
+
       transporter
-        .sendMail({
-          from: `"Privya Solution LLP" <${process.env.FROM_EMAIL}>`,
-          to: data.email,
-          subject: "We received your inquiry — Privya Solution LLP",
-          html: userHtml,
-        })
+        .sendMail(userMailOptions)
         .then(() => {
           console.log(`✅ Auto-reply sent to ${data.email}`);
         })

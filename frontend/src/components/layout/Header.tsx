@@ -60,7 +60,7 @@ export default function Header() {
 
         {/* Logo */}
         <Link href="/" className="flex items-center flex-shrink-0">
-          <Image src="/priya-logo1.svg" alt="Privya Solution LLP" width={140} height={42} priority className="object-contain" />
+          <Image src="/logo-darkmode.svg" alt="Privya Solution LLP" width={140} height={42} priority className="object-contain" />
         </Link>
 
         {/* Desktop Nav */}
